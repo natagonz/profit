@@ -218,29 +218,48 @@ def EditTransaction(token,id):
 	form.name.data = trans.name
 	form.amount.data = trans.amount
 	form.date.data = trans.date 
-	form.status.data = trans.status	
+	form.status.data = trans.status		
 	if form.validate_on_submit():
 		date = datetime.strptime(request.form["date"], '%m/%d/%Y').strftime('%Y-%m-%d')	
 		amount = request.form["amount"]	
 		jumlah = int(amount.replace(',',''))
 		status = request.form["status"] 	
-
-		if trans.status == "Income" and status == "Income" :
-			#Kurangi total saldo dengan jumlah income sebelum di edit 
-			account.amount = account.amount - trans.amount + jumlah
-		elif trans.status == "Income" and status == "Expense":
-			account.amount = account.amount - trans.amount - jumlah
-		elif trans.status == "Expense" and status == "Expense":
-			account.amount = account.amount + trans.amount - jumlah					
+		if trans.expenseowner_id is None:
+			if trans.status == "Income" and status == "Income" :
+				#Kurangi total saldo dengan jumlah income sebelum di edit 
+				account.amount = account.amount - trans.amount + jumlah
+			elif trans.status == "Income" and status == "Expense":
+				account.amount = account.amount - trans.amount - jumlah
+			elif trans.status == "Expense" and status == "Expense":
+				account.amount = account.amount + trans.amount - jumlah					
+			else :
+				#Kurangi total saldo dengan jumlah expense sebelum di edit 	
+				account.amount = account.amount + trans.amount + jumlah
+			
 		else :
-			#Kurangi total saldo dengan jumlah expense sebelum di edit 	
-			account.amount = account.amount + trans.amount + jumlah
+			project = Projects.query.filter_by(id=trans.expenseowner_id).first()
+			if trans.status == "Income" and status == "Income" :
+				#Kurangi total saldo dengan jumlah income sebelum di edit 
+				account.amount = account.amount - trans.amount + jumlah
+				project.profit = project.profit - trans.amount + jumlah
+
+			elif trans.status == "Income" and status == "Expense":			
+				account.amount = account.amount - trans.amount - jumlah
+				project.profit = project.profit - trans.amount - jumlah
+
+			elif trans.status == "Expense" and status == "Expense":		
+				account.amount = account.amount + trans.amount - jumlah
+				project.profit = project.profit + trans.amount - jumlah
+
+			else :
+				#Kurangi total saldo dengan jumlah expense sebelum di edit 				
+				account.amount = account.amount + trans.amount + jumlah
+				project.profit = project.profit + trans.amount + jumlah
 
 		trans.amount = jumlah
 		trans.name = request.form["name"]
 		trans.date = date 
 		trans.status = status
-		
 
 		db.session.commit()		
 
@@ -254,12 +273,23 @@ def EditTransaction(token,id):
 def DeleteTransaction(token,id):
 	account = Account.query.filter_by(accountowner_id=current_user.id).first()
 	trans = Transaction.query.filter_by(id=id).first()
-	if trans.status == "Income":
-		#kurangi saldo dengan income yg di hapus
-		account.amount = account.amount - trans.amount
+	if trans.expenseowner_id is None:
+		if trans.status == "Income":
+			#kurangi saldo dengan income yg di hapus
+			account.amount = account.amount - trans.amount
+		else :
+			#tambah saldo dengan expense yg di hapus
+			account.amount = account.amount + trans.amount
 	else :
-		#tambah saldo dengan expense yg di hapus
-		account.amount = account.amount + trans.amount
+		project = Projects.query.filter_by(id=trans.expenseowner_id).first()
+		if trans.status == "Expense":
+			account.amount = account.amount + trans.amount		
+			project.profit = project.profit + trans.amount
+		else :
+			account.amount = account.amount - trans.amount		
+			project.profit = project.profit - trans.amount
+			
+
 		
 		
 	db.session.delete(trans)
@@ -293,31 +323,38 @@ def AllProjects(token):
 	return render_template("projects/all.html",form=form,projects=projects)
 
 
-
 @app.route("/dashboard/<token>/projects/<id>",methods=["GET","POST"])
 @login_required
-def ProjectsId(token,id):
+def ProjectsId(id,token):
 	account = Account.query.filter_by(accountowner_id=current_user.id).first()
 	project = Projects.query.filter_by(id=id).first()
 	expenses = Transaction.query.filter_by(expenseowner_id=project.id).all()
-	form = AddExpenseForm()
+	total_ex = Transaction.query.filter_by(expenseowner_id=project.id).filter_by(status="Expense").all() 
+	total_in = Transaction.query.filter_by(expenseowner_id=project.id).filter_by(status="Income").all() 
+	form = AddTransactionForm()
 	if form.validate_on_submit():
 		amount = (form.amount.data) 
-		jumlah = int(amount.replace(',',''))				
-		trans = Transaction(amount=jumlah,name=form.name.data,date=form.date.data,status="Expense",owner=current_user.id,transactionowner_id=account.id,expenseowner_id=project.id)		
-		account.amount = account.amount - jumlah
-		project.expense = project.expense + jumlah		
+		jumlah = int(amount.replace(',',''))
+		status = form.status.data	
+		trans = Transaction(amount=jumlah,name=form.name.data,date=form.date.data,status=status,expenseowner_id=project.id,owner=current_user.id,transactionowner_id=account.id)
+		if status == "Income" :
+			account.amount = account.amount + jumlah
+			project.profit = project.profit + jumlah
+		elif status == "Expense":
+			account.amount = account.amount - jumlah
+			project.profit = project.profit - jumlah
+		else :
+			return "no access"		
 
 		db.session.add(trans)
-		db.session.commit()
-
-		project.profit = project.revenue - project.expense
 		db.session.commit()
 
 		return redirect(url_for("ProjectsId",id=id,token=token))	
 			
 
-	return render_template("projects/project.html",project=project,expenses=expenses,form=form)
+	return render_template("projects/project.html",project=project,expenses=expenses,form=form,total_ex=total_ex,total_in=total_in)
+
+
 
 
 @app.route("/dashboard/<token>/projects/edit/<id>/<expenseid>",methods=["GET","POST"])
@@ -327,49 +364,70 @@ def EditProjects(id,token,expenseid):
 	project = Projects.query.filter_by(id=id).first()
 	expense = Transaction.query.filter_by(id=expenseid).first()
 	expenses = Transaction.query.filter_by(expenseowner_id=project.id).all()
-	form = AddExpenseForm()
+	total_ex = Transaction.query.filter_by(expenseowner_id=project.id).filter_by(status="Expense").all() 
+	total_in = Transaction.query.filter_by(expenseowner_id=project.id).filter_by(status="Income").all() 
+	form = AddTransactionForm()
 	form.name.data = expense.name
 	form.amount.data = expense.amount
 	form.date.data = expense.date 
+	form.status.data = expense.status
 	if form.validate_on_submit():
 		date = datetime.strptime(request.form["date"], '%m/%d/%Y').strftime('%Y-%m-%d')	
 		amount = request.form["amount"]	
-		jumlah = int(amount.replace(',',''))		
-		account.amount = account.amount + expense.amount - jumlah
-		project.expense = project.expense - expense.amount + jumlah
-		project.profit = project.profit + expense.amount - jumlah
+		jumlah = int(amount.replace(',',''))	
+		status = request.form["status"] 
+		
+		if expense.status == "Income" and status == "Income" :
+			#Kurangi total saldo dengan jumlah income sebelum di edit 
+			account.amount = account.amount - expense.amount + jumlah
+			project.profit = project.profit - expense.amount + jumlah
 
+		elif expense.status == "Income" and status == "Expense":			
+			account.amount = account.amount - expense.amount - jumlah
+			project.profit = project.profit - expense.amount - jumlah
+
+		elif expense.status == "Expense" and status == "Expense":		
+			account.amount = account.amount + expense.amount - jumlah
+			project.profit = project.profit + expense.amount - jumlah
+
+		else :
+			#Kurangi total saldo dengan jumlah expense sebelum di edit 				
+			account.amount = account.amount + expense.amount + jumlah
+			project.profit = project.profit + expense.amount + jumlah
+
+
+		expense.status = status		
 		expense.amount = jumlah
 		expense.name = request.form["name"]
 		expense.date = date
 
+
 		db.session.commit()
+
 		return redirect(url_for("ProjectsId",id=id,token=token))
-	return render_template("projects/edit_expense.html",project=project,expenses=expenses,form=form,expense=expense)	
+	return render_template("projects/edit_expense.html",project=project,expenses=expenses,form=form,expense=expense,total_ex=total_ex,total_in=total_in)	
 
  
+
+
+
 @app.route("/dashboard/<token>/projects/delete/<id>/<expenseid>",methods=["GET","POST"])
 @login_required
 def DeleteExpense(id,expenseid,token):
 	account = Account.query.filter_by(accountowner_id=current_user.id).first()
 	project = Projects.query.filter_by(id=id).first()
 	expense = Transaction.query.filter_by(id=expenseid).first()
-	expenses = Transaction.query.filter_by(expenseowner_id=project.id).all()
-	account.amount = account.amount + expense.amount
-	project.expense = project.expense - expense.amount
-	project.profit = project.profit + expense.amount
+	if expense.status == "Expense":
+		account.amount = account.amount + expense.amount		
+		project.profit = project.profit + expense.amount
+	else :
+		account.amount = account.amount - expense.amount		
+		project.profit = project.profit - expense.amount
+		
 
 	db.session.delete(expense)
 	db.session.commit()
 	return redirect(url_for("ProjectsId",id=id,token=token))
-
-
-
-
-
-
-
-
 
 
 
