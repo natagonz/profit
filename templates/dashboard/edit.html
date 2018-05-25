@@ -1,0 +1,154 @@
+{% extends "layouts/dashboardtemplate.html" %}
+
+{% block content %}
+
+
+
+<ul id="social_side_links">
+  <li><a data-toggle="modal" data-target="#exampleModalAdd" ><img class="icon-float" src="https://cdn0.iconfinder.com/data/icons/round-ui-icons/512/add_blue.png" alt="" /></a></li>
+</ul>
+
+
+
+<div class="container">
+<div class="row">
+
+	<div class="col-md-4 col-xl-4">
+            <div class="card order-card">
+                <div class="card-block">
+                    <h6 class="m-b-20 text-center">Expense</h6>
+                    <h5 class="text-center expense"><i class="fa fa-cart-plus f-left"></i>${{ "{:,}".format(expense | sum(attribute='amount')) }}</h5>
+                    
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 col-xl-4">
+            <div class="card order-card">
+                <div class="card-block">
+                    <h6 class="m-b-20 text-center">Income</h6>
+                    <h5 class="text-center income"><i class="fa fa-rocket f-left"></i>$ {{ "{:,}".format(income | sum(attribute='amount')) }}</h5>
+                    
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 col-xl-4">
+            <div class="card order-card">
+                <div class="card-block">
+                    <h6 class="m-b-20 text-center">Balance</h6>
+                    <h5 class="text-center balance"><i class="fa fa-refresh f-left"></i>$ {{ "{:,}".format(balance)}}</h5>
+                    
+                </div>
+            </div>
+        </div>
+</div>
+</div> 
+
+<!-- Edit Modal -->
+<div class="modal fade" id="exampleModalLong" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true" data-keyboard="false" data-backdrop="static">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLongTitle">Edit Transaction</h5>   
+        <a href="/dashboard/{{ current_user.token }}/delete/{{ trans.id }}" class="red">Delete</a>  
+      </div>
+      <div class="modal-body">
+      {% from "includes/_formhelpers.html" import render_field %}
+            <form method="POST" enctype="multipart/form-data" id="form">
+               {{ form.hidden_tag() }}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                    {{ render_field(form.amount, class="form-control",placeholder="Amount" ,onkeyup="this.value=addThousandsSeparator(this.value);")}}
+                        </div>
+                    </div>
+            	    <div class="col-md-6">
+                		<div class="form-group">
+                    {{ render_field(form.name, class="form-control",placeholder="short description")}}
+                        </div>
+                    </div>  
+                </div>
+                <div class="row">  
+                    <div class="col-md-6">
+                        <div class="form-group">
+                        {{ render_field(form.status, class="form-control",placeholder="Status")}}
+                        </div>
+                    </div>       
+                    <div class="col-md-6">
+                        <div class="form-group">
+                        {{ render_field(form.date, class="form-control dtpick",placeholder="date")}}
+                        </div>
+                    </div>                 
+                 </div>               
+                    	        
+      </div>
+
+      <div class="modal-footer">
+        <a href="/dashboard/{{current_user.token}}" class="btn btn-secondary">Cancel</a>   
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="container">
+<div class="row">
+
+
+<div class="col-md-12">	
+
+			<div class="inbox-message">			
+				<ul>
+					{% for trans in transaction %}
+					<li>											
+							
+						<div class="message-body-heading" id="description">
+              <h5><a href="/dashboard/{{current_user.token}}/{{trans.id}}">{{ trans.name }}</a></h5>
+              {% if trans.status == "Expense" %}
+              <span><p class="red">- $ {{ trans.amount }}</p></span>
+              {% else %}
+              <span><p class="green"> $ {{ trans.amount }}</p></span>
+              {% endif %}
+            </div>
+              <p>{{ trans.date.strftime("%d-%B-%Y") }}</p>
+            
+            
+						
+						
+					</li>
+					{% endfor %}
+				</ul>
+			</div>
+		
+	
+</div>
+</div>
+</div>
+
+
+
+
+
+
+
+<script type="text/javascript">
+     function addThousandsSeparator(x) {
+    //remove commas
+    retVal = x ? parseFloat(x.replace(/,/g, '')) : 0;
+
+    //apply formatting
+    return retVal.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+</script>
+			
+<script>
+	$(document).ready(function() {
+  $('#exampleModalLong').modal('show');
+});
+</script>
+
+
+{% endblock %}
