@@ -23,3 +23,67 @@ def ProjectsId(token,id):
 
 	return render_template("projects/project.html",project=project,expenses=expenses,form=form)'''
 
+
+
+if trans.cashowner_id is None:
+			if trans.status == "Income" and status == "Income" :
+				#Kurangi total saldo dengan jumlah income sebelum di edit 
+				account.amount = account.amount - trans.amount + jumlah
+			elif trans.status == "Income" and status == "Expense":
+				account.amount = account.amount - trans.amount - jumlah
+			elif trans.status == "Expense" and status == "Expense":
+				account.amount = account.amount + trans.amount - jumlah					
+			else :
+				#Kurangi total saldo dengan jumlah expense sebelum di edit 	
+				account.amount = account.amount + trans.amount + jumlah
+			
+		else :
+			project = Projects.query.filter_by(id=trans.cashowner_id).first()
+			if trans.status == "Income" and status == "Income" :
+				#Kurangi total saldo dengan jumlah income sebelum di edit 
+				account.amount = account.amount - trans.amount + jumlah
+				project.profit = project.profit - trans.amount + jumlah
+
+			elif trans.status == "Income" and status == "Expense":			
+				account.amount = account.amount - trans.amount - jumlah
+				project.profit = project.profit - trans.amount - jumlah
+
+			elif trans.status == "Expense" and status == "Expense":		
+				account.amount = account.amount + trans.amount - jumlah
+				project.profit = project.profit + trans.amount - jumlah
+
+			else :
+				#Kurangi total saldo dengan jumlah expense sebelum di edit 				
+				account.amount = account.amount + trans.amount + jumlah
+				project.profit = project.profit + trans.amount + jumlah
+
+
+
+
+
+@app.route("/dashboard/<token>/delete/project/<id>",methods=["GET","POST"])
+@login_required
+def DeleteProjects(token,id):
+	account = Account.query.filter_by(accountowner_id=current_user.id).first()
+	project = Projects.query.filter_by(id=id).first()	
+	total_ex = Transaction.query.filter_by(cashowner_id=project.id).filter_by(status="Expense").all() 
+	total_in = Transaction.query.filter_by(cashowner_id=project.id).filter_by(status="Income").all() 
+	expense = 0
+	income = 0 
+
+	for x in total_ex :
+		expense = expense + x.amount 
+
+	for x in total_in :
+		income = income + x.amount
+
+	account.amount = account.amount + expense - income
+
+	delete_ex = Transaction.query.filter_by(cashowner_id=project.id).filter_by(status="Expense").delete()
+	delete_in = Transaction.query.filter_by(cashowner_id=project.id).filter_by(status="Income").delete()
+	
+	db.session.delete(project)
+	db.session.commit()	
+
+	return redirect(url_for("AllProjects",token=token))
+				

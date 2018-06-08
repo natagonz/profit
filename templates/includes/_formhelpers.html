@@ -5,8 +5,21 @@
     <ul class=errors>
     {% for error in field.errors %}
       <li>{{ error }}</li>
+    
+
+    <script type="text/javascript">
+      var formErrors = {% if field.errors %}true{% else %}false{% endif %};
+
+      $(document).ready(function() {
+          if (formErrors) {
+              $('.modal').modal('show');
+          }
+      });
+    </script>
     {% endfor %}
     </ul>
+    
   {% endif %}
   </dd>
 {% endmacro %}
+

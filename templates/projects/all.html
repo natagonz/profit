@@ -16,16 +16,22 @@
     </div>
     <div class="col-md-4 col-xl-4 text-center">
     	<h5>Total Expense</h5>
-    	<h6>$ {{ "{:,}".format(projects | sum(attribute='expense')) }}</h6>
+    	<h6>{{account.currency}} {{ "{:,}".format(total_ex | sum(attribute='amount')) }}</h6>
     </div>
      <div class="col-md-4 col-xl-4 text-center">
-    	<h5>Estimate Revenue</h5>
-    	<h6>$ {{ "{:,}".format(projects | sum(attribute='revenue')) }}</h6>
+    	<h5>Total Income</h5>
+    	<h6>{{account.currency}} {{ "{:,}".format(total_in | sum(attribute='amount')) }}</h6>
     </div>
+
+    {% set allincome = total_in | sum(attribute='amount') %}
+    {% set allexpense = total_ex | sum(attribute='amount') %}
+    {% set profit = allincome - allexpense %}
+
+
     <div class="col-md-4 col-xl-4 text-center">
-    	<h5>Total Projects</h5>
-    	<h6>{{ projects|length }}</h6>
-    </div>
+      <h5>Total Profit</h5>
+      <h6>{{account.currency}} {{ "{:,}".format(profit) }}</h6>
+    </div>    
        
         
   </div>
@@ -91,17 +97,7 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-        
+       
 <div class="container">
   <div class="row">
 
@@ -122,14 +118,14 @@
 	        	</div>
 	          
 	        </a>
-	        <h5 class="mt-2 mb-0"><a class="hover-primary" href="/dashboard/{{ current_user.token}}/projects/{{project.id}}" id="firstName" >{{ project.name }}</a></h5>
+	        <h5 class="mt-2 mb-0"><a class="hover-primary" href="/dashboard/projects/{{project.id}}" id="firstName" >{{ project.name }}</a></h5>
 	        
 	      </div>
 
 	      <footer class="card-footer flexbox">	        
 	        <div>
 	          <i class="fa fa-money pr-1"></i>
-	          <span>$ {{ project.revenue }}</span>
+	          <span>{{account.currency}}{{ "{:,}".format(project.revenue) }}</span>
 	        </div>
 	        <div>
 	          <i class="fa fa-circle pr-1 green"></i>

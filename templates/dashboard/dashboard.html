@@ -1,0 +1,87 @@
+{% extends "layouts/dashboardtemplate.html" %}
+
+{% block content %}
+    
+<div class="container">
+  <div class="row">
+  	<div class="col-md-12">	
+  		<h6 class="text-center">Welcome {{ current_user.username }},your trial end on 29 june 2018. Please upgrade here</h6>
+  	</div>	
+
+	<div class="col-md-12">		
+	<br>
+	<br>
+	
+	<div class="row">
+	  <div class="col-md-6 col-lg-4">
+	    <div class="card">      
+	      <div class="card-body text-center pt-1 pb-20">
+	        <a href="#">	          
+	          <img class="avatar avatar-xxl" src="https://png.icons8.com/dusk/50/000000/positive-dynamic.png">
+	        </a>
+	        <h5 class="mt-2 mb-0"><a class="hover-primary" href="/dashboard/{{current_user.token}}/transaction">Transaction</a></h5>
+	        <br>
+	        <p class="text-center">Manage transaction,see every transaction and see your profit</p>
+	        <a href="/dashboard/{{current_user.token}}/transaction" class="dash">Visit</a>
+	        
+	      </div>
+	      
+	    </div>
+	  </div>   
+	  
+	  <div class="col-md-6 col-lg-4">
+	    <div class="card">      
+	      <div class="card-body text-center pt-1 pb-20">
+	        <a href="#">
+	        	<img class="avatar avatar-xxl" src="https://png.icons8.com/dusk/50/000000/goal.png">
+	          
+	        </a>
+	        <h5 class="mt-2 mb-0"><a class="hover-primary" href="/dashboard/{{current_user.token}}/projects">Projects</a></h5>
+	        <br>
+	        <p class="text-center">Add project costing,track transaction,and see profit in every project</p>
+	        <a href="/dashboard/{{current_user.token}}/projects" class="dash">Visit</a>
+	       
+	      </div>
+	      
+	    </div>
+	  </div>   
+
+	  <div class="col-md-6 col-lg-4">
+	    <div class="card">      
+	      <div class="card-body text-center pt-1 pb-20">
+	        <a href="#">
+	          <img class="avatar avatar-xxl" src="https://png.icons8.com/dusk/50/000000/shop.png">	          
+	        </a>
+	        <h5 class="mt-2 mb-0"><a class="hover-primary" href="#">Marketplace (soon)</a></h5>
+	        <br>
+	        <p class="text-center">Browse curated service provider to help you stay profitable.</p>
+	        <a href="" class="dash">Visit</a>
+	       
+	      </div>
+
+	    </div>
+	  </div>   
+
+
+     </div>
+ 
+	</div>
+
+			
+	
+
+</div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+{% endblock %}

@@ -12,20 +12,26 @@
 <div class="row">
 
 	<div class="col-md-12 col-xl-12 text-center title">
-      <h3>Website Redesign</h3>       
+    	<h3>Website Redesign</h3>       
     </div>
     <div class="col-md-4 col-xl-4 text-center">
-      <h5>Total Expense</h5>
-      <h6>$ {{ "{:,}".format(total_ex | sum(attribute='amount')) }} </h6>
+    	<h5>Total Expense</h5>
+    	<h6>{{account.currency}} {{ "{:,}".format(total_ex | sum(attribute='amount')) }} </h6>
     </div>
      <div class="col-md-4 col-xl-4 text-center">
-      <h5>Total Income</h5>
-      <h6>$ {{ "{:,}".format(total_in | sum(attribute='amount')) }}</h6>
+    	<h5>Total Income</h5>
+    	<h6>{{account.currency}} {{ "{:,}".format(total_in | sum(attribute='amount')) }}</h6>
     </div>
+    {% set allincome = total_in | sum(attribute='amount') %}
+    {% set allexpense = total_ex | sum(attribute='amount') %}
+    {% set profit = allincome - allexpense %}
+
+
     <div class="col-md-4 col-xl-4 text-center">
       <h5>Total Profit</h5>
-      <h6>$ {{ "{:,}".format(project.profit) }}</h6>
+      <h6>{{account.currency}} {{ "{:,}".format(profit) }}</h6>
     </div>
+       
        
         
   </div>
@@ -40,49 +46,54 @@
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLongTitle">Edit Transaction</h5>
-        <a href="/dashboard/{{ current_user.token }}/projects/delete/{{ project.id }}/{{ expense.id }}" class="red">Delete</a>        
+        <h5 class="modal-title" id="exampleModalLongTitle">Edit Projects</h5>
+        <a href="/dashboard/delete/project/{{ project.id }}" class="red">Delete</a>
       </div>
-       <div class="modal-body">
+      <div class="modal-body">
       {% from "includes/_formhelpers.html" import render_field %}
             <form method="POST" enctype="multipart/form-data" id="form">
                {{ form.hidden_tag() }}
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                    {{ render_field(form.amount, class="form-control",placeholder="Amount" ,onkeyup="this.value=addThousandsSeparator(this.value);")}}
-                        </div>
-                    </div>
+                <div class="row">                    
                   <div class="col-md-6">
                     <div class="form-group">
-                    {{ render_field(form.name, class="form-control",placeholder="short description")}}
+                    {{ render_field(form.name, class="form-control",placeholder="ex: Website Redesign")}}
+                        </div>
+                    </div>  
+                    <div class="col-md-6">
+                    <div class="form-group">
+                    {{ render_field(form.customer, class="form-control",placeholder="ex: Google")}}
                         </div>
                     </div>  
                 </div>
                 <div class="row">  
                     <div class="col-md-6">
                         <div class="form-group">
-                        {{ render_field(form.date, class="form-control dtpick",placeholder="date")}}
+                        {{ render_field(form.due_date, class="form-control dtpick",placeholder="date")}}
                         </div>
                     </div>                 
                                 
                     <div class="col-md-6">
                         <div class="form-group">
-                       {{ render_field(form.status, class="form-control",placeholder="Status")}}
+                    {{ render_field(form.revenue, class="form-control",placeholder="Estimate Revenue" ,onkeyup="this.value=addThousandsSeparator(this.value);")}}
                         </div>
-                    </div>                                       
-                </div>                                                  
+                    </div>                               
+                </div>                    
+                <div class="row">  
+                    <div class="col-md-12">
+                        <div class="form-group">
+                        {{ render_field(form.description, class="form-control",placeholder="Projects Description ( optional)")}}
+                        </div>
+                    </div>  
+                </div>                                                          
       </div>
 
       <div class="modal-footer">
-        <a href="/dashboard/{{current_user.token}}/projects/{{project.id}}" class="btn btn-secondary">Cancel</a>  
+        <a href="/dashboard/projects/{{project.id}}" class="btn btn-secondary">Cancel</a>
         <button type="submit" class="btn btn-primary">Save</button>
       </div>
     </div>
   </div>
 </div>
-
-
 
 
 
@@ -106,8 +117,9 @@
                                 <p class="description text-center">
                                     {{ project.description }}
                                 </p>
+                                <br>
                                 <h6>Estimate Revenue</h6>
-                                <h6>${{ "{:,}".format(project.revenue) }}</h6>
+                                <h6>{{account.currency}}{{ "{:,}".format(project.revenue) }}</h6>
                             </div>
                             <br>
                             
@@ -116,22 +128,35 @@
 
 		    </div>
 		    <div class="col-md-8">
+            <div class="row">
+
+                <div class="col-md-2">
+                    <h6><img src="https://cdn1.vectorstock.com/i/thumb-large/54/60/filter-icon-balance-or-equalizer-sound-settings-vector-14125460.jpg" style="height: 40px;" id="show">Filter</h6>
+                </div>
+                <div class="col-md-6">    
+                    <h6><a data-toggle="modal" data-target="#exampleModalLong" ><img src="https://cdn0.iconfinder.com/data/icons/round-ui-icons/512/add_blue.png" style="height: 40px;" id="show"> New Transaction</a></h6>
+                      
+                </div>        
+            </div>
+
+            <br>
+            
 		    		<div  class="row">	    				 
 		    				<div class="col-md-12">
                                 <div class="inbox-message">         
                                     <ul>
-                                    {% for expense in expenses %}    
+                                    {% for trans in transaction %}    
                                         <li>                                            
                             
                                             <div class="message-body-heading" id="description">
-                                                <a href="/dashboard/{{current_user.token}}/projects/edit/{{project.id}}/{{expense.id}}"><h5>{{ expense.name }}</h5></a>
-                                                {% if expense.status == "Expense" %}
-                                                <span><p class="red">- $ {{ expense.amount }}</p></span>
+                                                <a href="/dashboard/projects/edit/{{project.id}}/{{trans.id}}"><h5>{{ trans.name }}</h5></a>
+                                                {% if trans.status == "Expense" %}
+                                                <span><p class="red">- {{account.currency}}  {{ "{:,}".format(trans.amount) }}</p></span>
                                                 {% else %}
-                                                <span><p class="green"> $ {{ expense.amount }}</p></span>
+                                                <span><p class="green"> {{account.currency}}  {{ "{:,}".format(trans.amount) }}</p></span>
                                                 {% endif %}
                                             </div>
-                                                <p>{{ expense.date }}</p>                                                
+                                                <p>{{ trans.date.strftime("%d-%B-%Y") }}</p>                                                
                                             
                                         </li>
 

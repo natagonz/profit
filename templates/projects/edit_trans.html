@@ -3,20 +3,24 @@
 {% block content %}
 <link href="{{url_for ('static',filename='projects/css/index.css')}}" rel="stylesheet"/>
 
+<ul id="social_side_links">
+  <li><a data-toggle="modal" data-target="#exampleModalLong" ><img class="icon-float" src="https://cdn0.iconfinder.com/data/icons/round-ui-icons/512/add_blue.png" alt="" /></a></li>
+</ul>
+
 
 <div class="container">
 <div class="row">
 
 	<div class="col-md-12 col-xl-12 text-center title">
-    	<h3>{{project.name}}</h3>       
+      <h3>Website Redesign</h3>       
     </div>
     <div class="col-md-4 col-xl-4 text-center">
-    	<h5>Total Expense</h5>
-    	<h6>{{account.currency}} {{ "{:,}".format(total_ex | sum(attribute='amount')) }} </h6>
+      <h5>Total Expense</h5>
+      <h6>{{account.currency}} {{ "{:,}".format(total_ex | sum(attribute='amount')) }} </h6>
     </div>
      <div class="col-md-4 col-xl-4 text-center">
-    	<h5>Total Income</h5>
-    	<h6>{{account.currency}} {{ "{:,}".format(total_in | sum(attribute='amount')) }}</h6>
+      <h5>Total Income</h5>
+      <h6>{{account.currency}} {{ "{:,}".format(total_in | sum(attribute='amount')) }}</h6>
     </div>
     {% set allincome = total_in | sum(attribute='amount') %}
     {% set allexpense = total_ex | sum(attribute='amount') %}
@@ -24,9 +28,10 @@
 
 
     <div class="col-md-4 col-xl-4 text-center">
-    	<h5>Total Profit</h5>
-    	<h6>{{account.currency}} {{ "{:,}".format(profit) }}</h6>
+      <h5>Total Profit</h5>
+      <h6>{{account.currency}} {{ "{:,}".format(profit) }}</h6>
     </div>
+       
        
         
   </div>
@@ -37,16 +42,14 @@
 <br>
 
 <!-- Modal -->
-<div class="modal fade" id="exampleModalLong" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+<div class="modal fade" id="exampleModalLong" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true" data-keyboard="false" data-backdrop="static">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLongTitle">Add Transaction</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
+        <h5 class="modal-title" id="exampleModalLongTitle">Edit Transaction</h5>
+        <a href="/dashboard/projects/delete/{{ project.id }}/{{ trans.id }}" class="red">Delete</a>        
       </div>
-      <div class="modal-body">
+       <div class="modal-body">
       {% from "includes/_formhelpers.html" import render_field %}
             <form method="POST" enctype="multipart/form-data" id="form">
                {{ form.hidden_tag() }}
@@ -78,7 +81,7 @@
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <a href="/dashboard/projects/{{project.id}}" class="btn btn-secondary">Cancel</a>  
         <button type="submit" class="btn btn-primary">Save</button>
       </div>
     </div>
@@ -102,28 +105,24 @@
                                   <div id="profileImage">
                                       <h3 class="inside">{{ project.name[0] }}</h3>
                                   </div>
-                                  <a href="/dashboard/edit/projects/{{ project.id }}"><h4 class="title">{{ project.name }}<br /></a>
-                                     <small>{{ project.customer }} </small>
+                                  <h4 class="title">{{ project.name }}<br />
+                                     <a href="#"><small>{{ project.customer }} </small></a>
                                   </h4>
                                 </div>
                                 <p class="description text-center">
                                     {{ project.description }}
-                                </p>                                
+                                </p>
                                 <br>
                                 <h6>Estimate Revenue</h6>
                                 <h6>{{account.currency}} {{ "{:,}".format(project.revenue) }}</h6>
-
-                                <small><a href="/dashboard/edit/projects/{{ project.id }}"><img src="https://png.icons8.com/windows/50/000000/pencil.png" style="height: 15px;">edit</a></small>
                             </div>
                             <br>
-                            
                             
                             
                         </div>	
 
 		    </div>
 		    <div class="col-md-8">
-
             <div class="row">
 
                 <div class="col-md-2">
@@ -136,8 +135,19 @@
             </div>
 
             <br>
+            <div class="row">
 
+                <div class="col-md-2">
+                    <h6><img src="https://cdn1.vectorstock.com/i/thumb-large/54/60/filter-icon-balance-or-equalizer-sound-settings-vector-14125460.jpg" style="height: 40px;" id="show">Filter</h6>
+                </div>
+                <div class="col-md-6">    
+                    <h6><a data-toggle="modal" data-target="#exampleModalLong" ><img src="https://cdn0.iconfinder.com/data/icons/round-ui-icons/512/add_blue.png" style="height: 40px;" id="show"> New Transaction</a></h6>
+                      
+                </div>        
+            </div>
 
+            <br>
+            
 		    		<div  class="row">	    				 
 		    				<div class="col-md-12">
                                 <div class="inbox-message">         
@@ -148,9 +158,9 @@
                                             <div class="message-body-heading" id="description">
                                                 <a href="/dashboard/projects/edit/{{project.id}}/{{trans.id}}"><h5>{{ trans.name }}</h5></a>
                                                 {% if trans.status == "Expense" %}
-                                                <span><p class="red">- {{account.currency}} {{ "{:,}".format(trans.amount) }}</p></span>
+                                                <span><p class="red">- {{account.currency}}  {{ "{:,}".format(trans.amount) }}</p></span>
                                                 {% else %}
-                                                <span><p class="green"> {{account.currency}} {{ "{:,}".format(trans.amount) }}</p></span>
+                                                <span><p class="green"> {{account.currency}}  {{ "{:,}".format(trans.amount) }}</p></span>
                                                 {% endif %}
                                             </div>
                                                 <p>{{ trans.date.strftime("%d-%B-%Y") }}</p>                                                
@@ -187,6 +197,11 @@
 
 </script>
             
+<script>
+  $(document).ready(function() {
+  $('#exampleModalLong').modal('show');
+});
+</script>
 
 
 
